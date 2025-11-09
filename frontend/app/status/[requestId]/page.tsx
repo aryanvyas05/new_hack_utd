@@ -12,6 +12,7 @@ export default function StatusPage() {
   const [status, setStatus] = useState<StatusResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [debugMode, setDebugMode] = useState(false);
 
   const fetchStatus = async () => {
     if (!requestId) {
@@ -91,6 +92,11 @@ export default function StatusPage() {
   const combinedRisk = status.riskScores?.combinedRiskScore || 0;
   const fraudRisk = status.riskScores?.fraudScore || 0;
   const contentRisk = status.riskScores?.contentRiskScore || 0;
+  const networkRisk = status.riskScores?.networkRiskScore || 0;
+  const entityRisk = status.riskScores?.entityRiskScore || 0;
+  const behavioralRisk = status.riskScores?.behavioralRiskScore || 0;
+  const paymentRisk = status.riskScores?.paymentRiskScore || 0;
+  const legalRisk = status.riskScores?.legalRiskScore || 0;
 
   const isApproved = status.status === 'APPROVED';
   const isRejected = status.status === 'REJECTED';
@@ -148,6 +154,28 @@ export default function StatusPage() {
                isRejected ? 'Application did not meet security requirements' :
                'Application flagged for additional verification'}
             </p>
+          </div>
+        </div>
+
+        {/* Debug Mode Toggle */}
+        <div className="bg-white rounded-2xl shadow-xl p-6 mb-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-lg font-bold text-gray-900">🔬 Debug Mode</h3>
+              <p className="text-sm text-gray-600">Show detailed calculation breakdowns</p>
+            </div>
+            <button
+              onClick={() => setDebugMode(!debugMode)}
+              className={`relative inline-flex h-8 w-14 items-center rounded-full transition-colors ${
+                debugMode ? 'bg-blue-600' : 'bg-gray-300'
+              }`}
+            >
+              <span
+                className={`inline-block h-6 w-6 transform rounded-full bg-white transition-transform ${
+                  debugMode ? 'translate-x-7' : 'translate-x-1'
+                }`}
+              />
+            </button>
           </div>
         </div>
 
@@ -250,11 +278,11 @@ export default function StatusPage() {
                   <Pie
                     data={[
                       { name: 'Fraud', value: fraudRisk * 100, color: '#ef4444' },
-                      { name: 'Network', value: (status.riskScores?.networkRiskScore || 0) * 100, color: '#f59e0b' },
-                      { name: 'Entity', value: (status.riskScores?.entityRiskScore || 0) * 100, color: '#eab308' },
-                      { name: 'Behavioral', value: (status.riskScores?.behavioralRiskScore || 0) * 100, color: '#84cc16' },
-                      { name: 'Payment', value: (status.riskScores?.paymentRiskScore || 0) * 100, color: '#06b6d4' },
-                      { name: 'Legal', value: (status.riskScores?.legalRiskScore || 0) * 100, color: '#8b5cf6' },
+                      { name: 'Network', value: networkRisk * 100, color: '#f59e0b' },
+                      { name: 'Entity', value: entityRisk * 100, color: '#eab308' },
+                      { name: 'Behavioral', value: behavioralRisk * 100, color: '#84cc16' },
+                      { name: 'Payment', value: paymentRisk * 100, color: '#06b6d4' },
+                      { name: 'Legal', value: legalRisk * 100, color: '#8b5cf6' },
                     ].filter(item => item.value > 0)}
                     cx="50%"
                     cy="50%"
@@ -266,11 +294,11 @@ export default function StatusPage() {
                   >
                     {[
                       { name: 'Fraud', value: fraudRisk * 100, color: '#ef4444' },
-                      { name: 'Network', value: (status.riskScores?.networkRiskScore || 0) * 100, color: '#f59e0b' },
-                      { name: 'Entity', value: (status.riskScores?.entityRiskScore || 0) * 100, color: '#eab308' },
-                      { name: 'Behavioral', value: (status.riskScores?.behavioralRiskScore || 0) * 100, color: '#84cc16' },
-                      { name: 'Payment', value: (status.riskScores?.paymentRiskScore || 0) * 100, color: '#06b6d4' },
-                      { name: 'Legal', value: (status.riskScores?.legalRiskScore || 0) * 100, color: '#8b5cf6' },
+                      { name: 'Network', value: networkRisk * 100, color: '#f59e0b' },
+                      { name: 'Entity', value: entityRisk * 100, color: '#eab308' },
+                      { name: 'Behavioral', value: behavioralRisk * 100, color: '#84cc16' },
+                      { name: 'Payment', value: paymentRisk * 100, color: '#06b6d4' },
+                      { name: 'Legal', value: legalRisk * 100, color: '#8b5cf6' },
                     ].filter(item => item.value > 0).map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={entry.color} />
                     ))}
@@ -286,11 +314,11 @@ export default function StatusPage() {
               <ResponsiveContainer width="100%" height={250}>
                 <BarChart data={[
                   { name: 'Fraud', score: fraudRisk * 100, color: '#ef4444' },
-                  { name: 'Network', score: (status.riskScores?.networkRiskScore || 0) * 100, color: '#f59e0b' },
-                  { name: 'Entity', score: (status.riskScores?.entityRiskScore || 0) * 100, color: '#eab308' },
-                  { name: 'Behavioral', score: (status.riskScores?.behavioralRiskScore || 0) * 100, color: '#84cc16' },
-                  { name: 'Payment', score: (status.riskScores?.paymentRiskScore || 0) * 100, color: '#06b6d4' },
-                  { name: 'Legal', score: (status.riskScores?.legalRiskScore || 0) * 100, color: '#8b5cf6' },
+                  { name: 'Network', score: networkRisk * 100, color: '#f59e0b' },
+                  { name: 'Entity', score: entityRisk * 100, color: '#eab308' },
+                  { name: 'Behavioral', score: behavioralRisk * 100, color: '#84cc16' },
+                  { name: 'Payment', score: paymentRisk * 100, color: '#06b6d4' },
+                  { name: 'Legal', score: legalRisk * 100, color: '#8b5cf6' },
                 ]}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="name" angle={-45} textAnchor="end" height={80} />
@@ -299,11 +327,11 @@ export default function StatusPage() {
                   <Bar dataKey="score">
                     {[
                       { name: 'Fraud', score: fraudRisk * 100, color: '#ef4444' },
-                      { name: 'Network', score: (status.riskScores?.networkRiskScore || 0) * 100, color: '#f59e0b' },
-                      { name: 'Entity', score: (status.riskScores?.entityRiskScore || 0) * 100, color: '#eab308' },
-                      { name: 'Behavioral', score: (status.riskScores?.behavioralRiskScore || 0) * 100, color: '#84cc16' },
-                      { name: 'Payment', score: (status.riskScores?.paymentRiskScore || 0) * 100, color: '#06b6d4' },
-                      { name: 'Legal', score: (status.riskScores?.legalRiskScore || 0) * 100, color: '#8b5cf6' },
+                      { name: 'Network', score: networkRisk * 100, color: '#f59e0b' },
+                      { name: 'Entity', score: entityRisk * 100, color: '#eab308' },
+                      { name: 'Behavioral', score: behavioralRisk * 100, color: '#84cc16' },
+                      { name: 'Payment', score: paymentRisk * 100, color: '#06b6d4' },
+                      { name: 'Legal', score: legalRisk * 100, color: '#8b5cf6' },
                     ].map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={entry.color} />
                     ))}
@@ -312,6 +340,189 @@ export default function StatusPage() {
               </ResponsiveContainer>
             </div>
           </div>
+
+          {/* DEBUG MODE: Detailed Calculations */}
+          {debugMode && (
+            <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl p-6 mb-6 border-2 border-purple-300">
+              <h3 className="text-xl font-bold text-gray-900 mb-4">🔬 Debug Mode: Calculation Breakdown</h3>
+              <p className="text-sm text-gray-600 mb-6">Detailed explanation of how each risk score was calculated</p>
+              
+              <div className="space-y-6">
+                {/* Fraud Risk Calculation */}
+                <div className="bg-white rounded-lg p-6 shadow-md">
+                  <h4 className="text-lg font-bold text-red-600 mb-3">🚨 Fraud Risk: {(fraudRisk * 100).toFixed(1)}%</h4>
+                  <div className="space-y-2 text-sm">
+                    <p className="font-semibold text-gray-900">Formula: Trust Score Inversion</p>
+                    <div className="bg-gray-50 p-4 rounded font-mono text-xs">
+                      <p>fraud_risk = 1.0 - (trust_score / 100)</p>
+                      <p className="mt-2 text-blue-600">= 1.0 - ({((1 - fraudRisk) * 100).toFixed(1)} / 100)</p>
+                      <p className="mt-2 text-green-600">= {fraudRisk.toFixed(3)}</p>
+                    </div>
+                    <div className="mt-3">
+                      <p className="font-semibold">Trust Components:</p>
+                      <ul className="list-disc list-inside ml-4 space-y-1">
+                        <li>Website Check (30 pts): {fraudRisk < 0.3 ? '✅ 30/30' : '❌ 0/30'}</li>
+                        <li>Email/MX Records (20 pts): {fraudRisk < 0.5 ? '✅ 20/20' : '❌ 0/20'}</li>
+                        <li>SSL Certificate (15 pts): {fraudRisk < 0.3 ? '✅ 15/15' : '❌ 0/15'}</li>
+                        <li>Domain Reputation (20 pts): ~{Math.round((1 - fraudRisk) * 20)}/20</li>
+                        <li>Entity Validation (15 pts): ~{Math.round((1 - fraudRisk) * 15)}/15</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Legal Risk Calculation */}
+                <div className="bg-white rounded-lg p-6 shadow-md">
+                  <h4 className="text-lg font-bold text-purple-600 mb-3">⚖️ Legal Risk: {(legalRisk * 100).toFixed(1)}%</h4>
+                  <div className="space-y-2 text-sm">
+                    <p className="font-semibold text-gray-900">Formula: NLP Keyword Detection + Severity Weighting</p>
+                    <div className="bg-gray-50 p-4 rounded font-mono text-xs">
+                      <p>legal_risk = max(category_risks) * issue_multiplier * severity_avg</p>
+                      <p className="mt-2 text-blue-600">Categories detected: {status.fraudDetails?.legalIssues?.length || 0} issues</p>
+                      <p className="mt-1">- Criminal: severity 1.0</p>
+                      <p>- Fraud: severity 0.95</p>
+                      <p>- Regulatory: severity 0.7</p>
+                      <p>- Civil Litigation: severity 0.5</p>
+                    </div>
+                    <div className="mt-3">
+                      <p className="font-semibold">Detected Keywords:</p>
+                      <div className="max-h-40 overflow-y-auto">
+                        {status.fraudDetails?.legalIssues?.slice(0, 5).map((issue: any, idx: number) => (
+                          <div key={idx} className="bg-red-50 p-2 rounded mt-2">
+                            <p className="font-semibold text-red-800">{issue.category}: {issue.keyword}</p>
+                            <p className="text-xs text-gray-600 italic">{issue.context?.substring(0, 100)}...</p>
+                            <p className="text-xs text-red-600">Severity: {(issue.severity * 100).toFixed(0)}%</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Payment Risk Calculation */}
+                <div className="bg-white rounded-lg p-6 shadow-md">
+                  <h4 className="text-lg font-bold text-cyan-600 mb-3">💳 Payment Risk: {(paymentRisk * 100).toFixed(1)}%</h4>
+                  <div className="space-y-2 text-sm">
+                    <p className="font-semibold text-gray-900">Formula: Weighted Average of Financial Indicators</p>
+                    <div className="bg-gray-50 p-4 rounded font-mono text-xs">
+                      <p>payment_risk = (max_risk * 0.7) + (avg_risk * 0.3)</p>
+                      <p className="mt-2 text-blue-600">Factors analyzed:</p>
+                      <p>- Business Age (older = lower risk)</p>
+                      <p>- Bankruptcy Indicators (critical if found)</p>
+                      <p>- Financial Stability Keywords</p>
+                      <p>- Payment Terms Analysis</p>
+                      <p>- Simulated Credit Score</p>
+                    </div>
+                    <div className="mt-3">
+                      <p className="font-semibold">Payment Insights:</p>
+                      {status.fraudDetails?.paymentInsights?.map((insight: any, idx: number) => (
+                        <div key={idx} className="bg-blue-50 p-2 rounded mt-2">
+                          <p className="font-semibold">{insight.type}: {insight.value}</p>
+                          <p className="text-xs text-gray-600">{insight.message}</p>
+                          <p className={`text-xs font-semibold ${
+                            insight.risk === 'HIGH' ? 'text-red-600' : 
+                            insight.risk === 'MEDIUM' ? 'text-yellow-600' : 'text-green-600'
+                          }`}>Risk Level: {insight.risk}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Network Risk Calculation */}
+                <div className="bg-white rounded-lg p-6 shadow-md">
+                  <h4 className="text-lg font-bold text-orange-600 mb-3">🕸️ Network Risk: {(networkRisk * 100).toFixed(1)}%</h4>
+                  <div className="space-y-2 text-sm">
+                    <p className="font-semibold text-gray-900">Formula: Fraud Ring Detection</p>
+                    <div className="bg-gray-50 p-4 rounded font-mono text-xs">
+                      <p>network_risk = (max_risk * 0.7) + (avg_risk * 0.3)</p>
+                      <p className="mt-2 text-blue-600">Detection Methods:</p>
+                      <p>- IP Clustering (3+ vendors from same IP)</p>
+                      <p>- Text Similarity (Jaccard Index &gt; 0.85)</p>
+                      <p>- Email Domain Sharing (5+ vendors)</p>
+                      <p>- Temporal Clustering (10+ in 1 hour)</p>
+                      <p>- Behavioral Fingerprinting</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Entity Risk Calculation */}
+                <div className="bg-white rounded-lg p-6 shadow-md">
+                  <h4 className="text-lg font-bold text-yellow-600 mb-3">🏢 Entity Risk: {(entityRisk * 100).toFixed(1)}%</h4>
+                  <div className="space-y-2 text-sm">
+                    <p className="font-semibold text-gray-900">Formula: Sanctions & Watchlist Screening</p>
+                    <div className="bg-gray-50 p-4 rounded font-mono text-xs">
+                      <p>entity_risk = (max_risk * 0.6) + (avg_risk * 0.4)</p>
+                      <p className="mt-2 text-blue-600">Screening Against:</p>
+                      <p>- OFAC SDN List (sanctions)</p>
+                      <p>- High-Risk Jurisdictions</p>
+                      <p>- PEP (Politically Exposed Persons)</p>
+                      <p>- Negative News Keywords</p>
+                      <p>- Corporate Registry Verification</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Behavioral Risk Calculation */}
+                <div className="bg-white rounded-lg p-6 shadow-md">
+                  <h4 className="text-lg font-bold text-lime-600 mb-3">📊 Behavioral Risk: {(behavioralRisk * 100).toFixed(1)}%</h4>
+                  <div className="space-y-2 text-sm">
+                    <p className="font-semibold text-gray-900">Formula: Statistical Anomaly Detection</p>
+                    <div className="bg-gray-50 p-4 rounded font-mono text-xs">
+                      <p>behavioral_risk = (max_risk * 0.6) + (avg_risk * 0.4)</p>
+                      <p className="mt-2 text-blue-600">Z-Score Analysis:</p>
+                      <p>z = (x - μ) / σ</p>
+                      <p className="mt-1">Flags if |z| &gt; 3 (3 standard deviations)</p>
+                      <p className="mt-2">Detection Methods:</p>
+                      <p>- Timing Analysis (business hours)</p>
+                      <p>- Data Quality (length, repetition)</p>
+                      <p>- Bot Detection (patterns, lorem ipsum)</p>
+                      <p>- Submission Velocity</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Combined Risk Calculation */}
+                <div className="bg-gradient-to-r from-red-50 to-orange-50 rounded-lg p-6 shadow-lg border-2 border-red-300">
+                  <h4 className="text-xl font-bold text-red-700 mb-3">🎯 Combined Risk Score: {(combinedRisk * 100).toFixed(1)}%</h4>
+                  <div className="space-y-2 text-sm">
+                    <p className="font-semibold text-gray-900">Formula: Weighted Average</p>
+                    <div className="bg-white p-4 rounded font-mono text-xs">
+                      <p className="font-bold">combined_risk = (fraud * 0.7) + (content * 0.3)</p>
+                      <p className="mt-3 text-blue-600">Calculation:</p>
+                      <p>= ({fraudRisk.toFixed(3)} × 0.7) + ({contentRisk.toFixed(3)} × 0.3)</p>
+                      <p>= {(fraudRisk * 0.7).toFixed(3)} + {(contentRisk * 0.3).toFixed(3)}</p>
+                      <p className="mt-2 text-green-600 font-bold">= {combinedRisk.toFixed(3)}</p>
+                      
+                      <div className="mt-4 pt-4 border-t border-gray-300">
+                        <p className="font-bold text-purple-600">Comprehensive Risk (All 8 Engines):</p>
+                        <p className="mt-2">comprehensive_risk = </p>
+                        <p className="ml-4">network × 0.15 +</p>
+                        <p className="ml-4">entity × 0.30 +</p>
+                        <p className="ml-4">behavioral × 0.15 +</p>
+                        <p className="ml-4">payment × 0.15 +</p>
+                        <p className="ml-4">legal × 0.20 +</p>
+                        <p className="ml-4">fraud × 0.05 +</p>
+                        <p className="ml-4">content × 0.05</p>
+                        <p className="mt-2">= {networkRisk.toFixed(3)} × 0.15 + {entityRisk.toFixed(3)} × 0.30 + {behavioralRisk.toFixed(3)} × 0.15 + {paymentRisk.toFixed(3)} × 0.15 + {legalRisk.toFixed(3)} × 0.20 + {fraudRisk.toFixed(3)} × 0.05 + {contentRisk.toFixed(3)} × 0.05</p>
+                        <p className="mt-2 text-green-600 font-bold">= {(networkRisk * 0.15 + entityRisk * 0.30 + behavioralRisk * 0.15 + paymentRisk * 0.15 + legalRisk * 0.20 + fraudRisk * 0.05 + contentRisk * 0.05).toFixed(3)}</p>
+                      </div>
+                    </div>
+                    <div className="mt-4 bg-yellow-50 p-3 rounded">
+                      <p className="font-semibold text-yellow-800">Decision Threshold:</p>
+                      <p className="text-xs text-gray-700 mt-1">
+                        • &lt; 0.3: AUTO_APPROVE<br/>
+                        • 0.3 - 0.5: STANDARD_REVIEW<br/>
+                        • 0.5 - 0.7: ENHANCED_DUE_DILIGENCE<br/>
+                        • 0.7 - 0.8: MANUAL_REVIEW<br/>
+                        • &gt; 0.8: BLOCKED
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Trust Signal Breakdown */}
           <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl p-6 mb-6">

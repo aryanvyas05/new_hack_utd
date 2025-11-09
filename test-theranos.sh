@@ -1,47 +1,28 @@
 #!/bin/bash
 
-echo "🧪 Testing Theranos Analysis with New Heuristics..."
-echo ""
+echo "🧪 Testing with Theranos-like fraudulent company..."
 
-# Submit onboarding request
-echo "1. Submitting Theranos onboarding request..."
-RESPONSE=$(curl -s -X POST "$(cat frontend/.env.local | grep NEXT_PUBLIC_API_URL | cut -d'=' -f2)/onboard" \
+# Submit a high-risk vendor with fraud indicators
+REQUEST_ID=$(curl -s -X POST \
+  https://4idq862c8f.execute-api.us-east-1.amazonaws.com/prod/onboard \
   -H "Content-Type: application/json" \
   -d '{
-    "vendorName": "Theranos",
-    "contactEmail": "contact@theranos.com",
-    "businessDescription": "Theranos was a health technology company founded in 2003 that claimed to revolutionize blood testing with proprietary technology. The company faced fraud charges from the SEC in 2018. CEO Elizabeth Holmes was convicted of fraud in federal court in 2022. The company filed for bankruptcy and shut down operations after investigations revealed the technology did not work as claimed. Multiple lawsuits were filed against the company.",
-    "taxId": "12-3456789",
-    "sourceIp": "192.168.1.1"
-  }')
+    "vendorName": "Theranos Health Solutions Inc",
+    "contactEmail": "admin@theranos-fake.xyz",
+    "businessDescription": "Revolutionary blood testing company founded in 2003. We were sued in 2023 for fraud. Case No. 2023-CV-8765. SEC charges filed for securities fraud. Company filed for bankruptcy in 2024. Federal investigation ongoing. Settlement of $500 million with investors. Criminal charges pending against executives. Ponzi scheme allegations from multiple sources. Money laundering investigation by FBI. Federal court case in progress. Multiple regulatory violations cited by FDA. Consumer complaints filed with FTC and BBB. Patent infringement lawsuit from competitors. Discrimination lawsuit from former employees. Company operates from sanctioned jurisdiction. Negative news coverage about deceptive practices.",
+    "taxId": "11-1111111",
+    "sourceIp": "192.168.1.100"
+  }' | jq -r '.requestId')
 
-REQUEST_ID=$(echo $RESPONSE | python3 -c "import sys, json; print(json.load(sys.stdin).get('requestId', 'ERROR'))")
-
-if [ "$REQUEST_ID" = "ERROR" ]; then
-  echo "❌ Failed to submit request"
-  echo $RESPONSE
-  exit 1
-fi
-
-echo "✅ Request submitted: $REQUEST_ID"
+echo "✅ Submitted Theranos test: $REQUEST_ID"
 echo ""
-
-# Wait for processing
-echo "2. Waiting for analysis to complete (10 seconds)..."
-sleep 10
-
-# Get status
-echo ""
-echo "3. Fetching analysis results..."
-STATUS=$(curl -s "$(cat frontend/.env.local | grep NEXT_PUBLIC_API_URL | cut -d'=' -f2)/status/$REQUEST_ID")
+echo "⏳ Waiting 15 seconds for processing..."
+sleep 15
 
 echo ""
-echo "📊 RESULTS:"
-echo "=========================================="
-echo $STATUS | python3 -m json.tool | grep -A 2 "legalRiskScore\|paymentRiskScore\|legalStatus\|reliabilityRating\|legalIssues"
+echo "📊 Fetching results..."
+curl -s "https://4idq862c8f.execute-api.us-east-1.amazonaws.com/prod/status/$REQUEST_ID" | jq '.'
 
 echo ""
-echo "🌐 View full results at:"
+echo "🌐 View in browser:"
 echo "http://localhost:3000/status/$REQUEST_ID"
-echo ""
-echo "✅ Test complete!"

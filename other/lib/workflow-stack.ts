@@ -299,6 +299,24 @@ export class WorkflowStack extends cdk.Stack {
         'submittedAt.$': '$.submittedAt',
         'fraudScore.$': '$.riskAssessments[0].fraudScore',
         'contentRiskScore.$': '$.riskAssessments[1].contentRiskScore',
+        // Pass through all the new risk scores from fraud detector
+        'networkRiskScore.$': '$.riskAssessments[0].networkRiskScore',
+        'entityRiskScore.$': '$.riskAssessments[0].entityRiskScore',
+        'behavioralRiskScore.$': '$.riskAssessments[0].behavioralRiskScore',
+        'paymentRiskScore.$': '$.riskAssessments[0].paymentRiskScore',
+        'legalRiskScore.$': '$.riskAssessments[0].legalRiskScore',
+        'trustScore.$': '$.riskAssessments[0].trustScore',
+        // Pass through analysis details
+        'paymentAnalysis.$': '$.riskAssessments[0].paymentAnalysis',
+        'paymentInsights.$': '$.riskAssessments[0].paymentInsights',
+        'reliabilityRating.$': '$.riskAssessments[0].reliabilityRating',
+        'legalAnalysis.$': '$.riskAssessments[0].legalAnalysis',
+        'legalIssues.$': '$.riskAssessments[0].legalIssues',
+        'legalStatus.$': '$.riskAssessments[0].legalStatus',
+        'trustSignals.$': '$.riskAssessments[0].trustSignals',
+        'networkAnalysis.$': '$.riskAssessments[0].networkAnalysis',
+        'entities.$': '$.riskAssessments[0].entities',
+        'behavioralIndicators.$': '$.riskAssessments[0].behavioralIndicators',
       },
     });
 
