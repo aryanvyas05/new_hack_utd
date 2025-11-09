@@ -1,0 +1,36 @@
+'use client';
+
+import { useRouter } from 'next/navigation';
+import { Heading, View, Text, Button } from '@aws-amplify/ui-react';
+
+// BACKUP VERSION - NO AUTH
+// Use this if Cognito auth is causing issues during demo
+// To use: rename this file to page.tsx (backup the original first)
+
+export default function Home() {
+  const router = useRouter();
+
+  return (
+    <View padding="2rem" maxWidth="1200px" margin="0 auto">
+      <View textAlign="center" marginTop="3rem">
+        <Heading level={1} marginBottom="1rem">
+          Veritas Onboard
+        </Heading>
+        <Text fontSize="1.2rem" marginBottom="2rem" color="orange">
+          ⚠️ Demo Mode - Authentication Bypassed
+        </Text>
+        <Text marginBottom="2rem">
+          Streamline your vendor onboarding process with automated fraud detection,
+          PII protection, and intelligent risk assessment.
+        </Text>
+        <Button
+          variation="primary"
+          size="large"
+          onClick={() => router.push('/onboard')}
+        >
+          Start Onboarding Process
+        </Button>
+      </View>
+    </View>
+  );
+}

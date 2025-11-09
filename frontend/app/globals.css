@@ -1,0 +1,77 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* Modern, clean color scheme */
+  --amplify-colors-background-primary: #ffffff;
+  --amplify-colors-background-secondary: #f8f9fa;
+  --amplify-colors-font-primary: #1a1a1a;
+  --amplify-colors-font-secondary: #6c757d;
+  --amplify-colors-font-tertiary: #adb5bd;
+  --amplify-colors-brand-primary-10: #e3f2fd;
+  --amplify-colors-brand-primary-80: #1976d2;
+  --amplify-colors-brand-primary-90: #1565c0;
+  --amplify-colors-brand-primary-100: #0d47a1;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Override Amplify UI ugly defaults */
+[data-amplify-theme] {
+  --amplify-colors-background-primary: #ffffff !important;
+  --amplify-colors-background-secondary: #f8f9fa !important;
+  --amplify-colors-font-primary: #1a1a1a !important;
+  --amplify-colors-font-secondary: #6c757d !important;
+  --amplify-colors-brand-primary-10: #e3f2fd !important;
+  --amplify-colors-brand-primary-80: #1976d2 !important;
+  --amplify-colors-brand-primary-90: #1565c0 !important;
+  --amplify-colors-brand-primary-100: #0d47a1 !important;
+}
+
+/* Better button styling */
+button[data-variation="primary"] {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+  border: none !important;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1) !important;
+  transition: transform 0.2s, box-shadow 0.2s !important;
+}
+
+button[data-variation="primary"]:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15) !important;
+}
+
+/* Better card styling */
+[data-amplify-card] {
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07) !important;
+  border: 1px solid #e9ecef !important;
+  border-radius: 12px !important;
+}
+
+/* Better input styling */
+input, textarea {
+  border: 2px solid #e9ecef !important;
+  border-radius: 8px !important;
+  transition: border-color 0.2s !important;
+}
+
+input:focus, textarea:focus {
+  border-color: #667eea !important;
+  outline: none !important;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1) !important;
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}

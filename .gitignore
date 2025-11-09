@@ -1,0 +1,29 @@
+*.js
+!jest.config.js
+*.d.ts
+node_modules
+
+# CDK asset staging directory
+.cdk.staging
+cdk.out
+
+# Lambda build artifacts
+lambda/**/*.pyc
+lambda/**/__pycache__
+lambda/**/venv
+lambda/**/.pytest_cache
+
+# IDE
+.idea
+.vscode
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment
+.env
+.env.local

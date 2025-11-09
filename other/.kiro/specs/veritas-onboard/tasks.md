@@ -1,0 +1,369 @@
+# Implementation Plan
+
+- [x] 1. Initialize CDK project structure and configure base infrastructure
+  - Create CDK TypeScript project with proper directory structure (bin/, lib/, lambda/)
+  - Configure cdk.json with context values for different environments
+  - Set up package.json with required CDK dependencies (@aws-cdk/aws-lambda, @aws-cdk/aws-stepfunctions, etc.)
+  - Create base CDK app entry point in bin/app.ts that instantiates all stacks
+  - _Requirements: 10.1, 10.2, 10.3, 10.4, 10.5_
+
+- [x] 2. Implement DynamoDB database stack
+  - [x] 2.1 Create database-stack.ts with DynamoDB table definition
+    - Define OnboardingRequests table with requestId as partition key
+    - Configure PAY_PER_REQUEST billing mode for auto-scaling
+    - Enable point-in-time recovery and AWS managed encryption
+    - Export table name and ARN as CloudFormation outputs
+    - _Requirements: 7.1, 7.2, 7.4, 7.5_
+  - [x] 2.2 Add Global Secondary Index for status queries
+    - Create StatusIndex GSI with status as partition key and createdAt as sort key
+    - Configure ALL projection type to include all attributes
+    - _Requirements: 7.3_
+
+- [x] 3. Implement PII redaction Lambda function
+  - [x] 3.1 Create lambda/redact-pii/lambda_function.py with PII detection logic
+    - Implement regex patterns for SSN (XXX-XX-XXXX format)
+    - Implement regex patterns for credit card numbers (13-19 digits)
+    - Implement regex patterns for phone numbers (North American formats)
+    - Implement email masking logic (preserve domain, mask local part)
+    - Create masking function that replaces sensitive digits with asterisks while preserving last 4 characters
+    - _Requirements: 2.1, 2.2, 2.3, 2.4, 2.5_
+  - [x] 3.2 Add error handling and logging
+    - Wrap PII detection in try-except blocks
+    - Log detected PII types (without logging actual PII values)
+    - Return original data if redaction fails with error flag
+    - _Requirements: 2.1_
+  - [ ]* 3.3 Write unit tests for PII redaction patterns
+    - Test SSN detection and masking with various formats
+    - Test credit card detection for different card types
+    - Test phone number detection with various formats
+    - Test email masking preserves domain
+    - Test handling of text with no PII
+    - _Requirements: 2.2, 2.3, 2.4, 2.5_
+
+- [x] 4. Implement Fraud Detector Lambda function
+  - [x] 4.1 Create lambda/fraud-detector/lambda_function.py with Fraud Detector integration
+    - Initialize boto3 Fraud Detector client
+    - Implement get_event_prediction call with email, IP address, and vendor name variables
+    - Parse fraud score from response (0.0 to 1.0 range)
+    - Extract risk factors from model outcomes
+    - _Requirements: 3.1, 3.2, 3.3_
+  - [x] 4.2 Add error handling with default scoring
+    - Catch Fraud Detector API errors (throttling, service unavailable)
+    - Assign default fraud score of 0.5 on error
+    - Log warning with error details to CloudWatch
+    - Continue workflow execution even on error
+    - _Requirements: 3.4_
+  - [ ]* 4.3 Write unit tests for Fraud Detector Lambda
+    - Mock boto3 Fraud Detector client responses
+    - Test successful fraud score retrieval
+    - Test error handling with default score assignment
+    - Test parsing of risk factors from response
+    - _Requirements: 3.2, 3.3, 3.4_
+
+- [x] 5. Implement Comprehend sentiment analysis Lambda function
+  - [x] 5.1 Create lambda/comprehend/lambda_function.py with Comprehend integration
+    - Initialize boto3 Comprehend client
+    - Implement detect_sentiment call for business description text
+    - Implement detect_key_phrases call to extract key phrases
+    - Calculate content risk score based on sentiment (NEGATIVE +0.4, MIXED +0.2)
+    - Add risk scoring for risky key phrases (e.g., "money laundering", "offshore", "shell company")
+    - Cap final content risk score at 1.0
+    - _Requirements: 4.1, 4.2, 4.3, 4.4_
+  - [x] 5.2 Add error handling with default scoring
+    - Catch Comprehend API errors
+    - Assign default content risk score of 0.0 on error
+    - Log warning with error details
+    - _Requirements: 4.5_
+  - [ ]* 5.3 Write unit tests for Comprehend Lambda
+    - Mock boto3 Comprehend client responses
+    - Test sentiment score calculation for NEGATIVE, MIXED, POSITIVE
+    - Test key phrase risk scoring
+    - Test error handling with default score
+    - _Requirements: 4.1, 4.2, 4.3, 4.4, 4.5_
+
+- [x] 6. Implement risk score combination Lambda function
+  - [x] 6.1 Create lambda/combine-scores/lambda_function.py with weighted scoring logic
+    - Extract fraud score and content risk score from input
+    - Calculate combined risk score: (fraudScore * 0.7) + (contentRiskScore * 0.3)
+    - Determine recommendation: "MANUAL_REVIEW" if score > 0.8, else "AUTO_APPROVE"
+    - Return combined score and recommendation
+    - _Requirements: 5.2, 5.3, 5.4_
+  - [ ]* 6.2 Write unit tests for score combination
+    - Test weighted average calculation with various score combinations
+    - Test threshold logic at boundary (0.8)
+    - Test recommendation assignment for high and low risk scores
+    - _Requirements: 5.2, 5.3, 5.4_
+
+- [x] 7. Implement DynamoDB save Lambda function
+  - [x] 7.1 Create lambda/save-dynamo/lambda_function.py with DynamoDB write logic
+    - Initialize boto3 DynamoDB client
+    - Build complete item with all fields (requestId, status, vendor info, risk scores)
+    - Add timestamps (createdAt, updatedAt) as Unix timestamps
+    - Build audit trail array with submission and processing events
+    - Execute put_item to write to OnboardingRequests table
+    - _Requirements: 7.1, 7.4, 7.5, 5.5_
+  - [x] 7.2 Add retry logic and error handling
+    - Implement exponential backoff retry (3 attempts)
+    - Log errors to CloudWatch on failure
+    - _Requirements: 7.5_
+  - [ ]* 7.3 Write unit tests for DynamoDB save
+    - Mock boto3 DynamoDB client
+    - Test item structure matches schema
+    - Test timestamp generation
+    - Test retry logic on throttling errors
+    - _Requirements: 7.1, 7.4, 7.5_
+
+- [x] 8. Implement admin notification Lambda function
+  - [x] 8.1 Create lambda/notify-admin/lambda_function.py with SNS integration
+    - Initialize boto3 SNS client
+    - Build notification message with request ID, vendor name, risk score, timestamp
+    - Format message for email readability
+    - Publish message to admin SNS topic
+    - _Requirements: 6.1, 6.2, 6.3_
+  - [x] 8.2 Add error handling for notification failures
+    - Catch SNS publish errors
+    - Log error to CloudWatch
+    - Do not fail workflow on notification error
+    - _Requirements: 6.4_
+  - [ ]* 8.3 Write unit tests for notification Lambda
+    - Mock boto3 SNS client
+    - Test message formatting
+    - Test error handling doesn't throw exceptions
+    - _Requirements: 6.1, 6.2, 6.3, 6.4_
+
+- [x] 9. Implement workflow orchestration stack with Step Functions
+  - [x] 9.1 Create workflow-stack.ts with all Lambda function definitions
+    - Define Lambda functions for all 6 workflow steps (redact-pii, fraud-detector, comprehend, combine-scores, save-dynamo, notify-admin)
+    - Configure Python 3.12 runtime for all functions
+    - Set appropriate memory (256MB-512MB) and timeout (30s-60s) for each function
+    - Package Lambda code from lambda/ directory
+    - _Requirements: 10.3, 10.4_
+  - [x] 9.2 Configure IAM roles with least-privilege permissions
+    - Grant CloudWatch Logs write permissions to all Lambda roles
+    - Grant Fraud Detector read permissions to fraud-detector Lambda
+    - Grant Comprehend read permissions to comprehend Lambda
+    - Grant DynamoDB write permissions to save-dynamo Lambda (specific table only)
+    - Grant SNS publish permissions to notify-admin Lambda (specific topic only)
+    - _Requirements: 10.4_
+  - [x] 9.3 Define Step Functions state machine with complete workflow
+    - Create state machine definition in Amazon States Language JSON
+    - Define RedactPII task state invoking redact-pii Lambda
+    - Define ParallelRiskAssessment parallel state with two branches (fraud-detector and comprehend)
+    - Define CombineScores task state invoking combine-scores Lambda
+    - Define EvaluateRisk choice state with threshold check (> 0.8)
+    - Define ManualReview and AutoApprove task states invoking save-dynamo Lambda with different status
+    - Define NotifyAdmin task state invoking notify-admin Lambda
+    - Configure result paths and parameters for data flow between states
+    - _Requirements: 5.1, 5.3, 5.4, 5.5_
+  - [x] 9.4 Add error handling and retry configuration to state machine
+    - Configure retry policy for all Lambda tasks (2 retries, exponential backoff)
+    - Add catch blocks for States.ALL error type
+    - Set backoff rate to 2.0 with max interval of 10 seconds
+    - _Requirements: 5.5_
+  - [x] 9.5 Create SNS topic for admin notifications
+    - Define SNS topic in workflow stack
+    - Export topic ARN for manual email subscription
+    - Pass topic ARN to notify-admin Lambda as environment variable
+    - _Requirements: 6.1, 6.3_
+
+- [x] 10. Implement API Gateway and WAF stack
+  - [x] 10.1 Create api-stack.ts with REST API Gateway definition
+    - Define REST API with descriptive name and description
+    - Configure CORS settings for frontend domain
+    - Enable CloudWatch logging for all requests
+    - Export API endpoint URL as CloudFormation output
+    - _Requirements: 9.1_
+  - [x] 10.2 Create start-workflow Lambda function
+    - Create lambda/start-workflow/lambda_function.py
+    - Implement input validation for required fields (vendorName, contactEmail, businessDescription, taxId)
+    - Generate UUID for requestId
+    - Extract source IP from API Gateway event context
+    - Initialize boto3 Step Functions client and start execution with input data
+    - Return 202 Accepted response with requestId
+    - _Requirements: 1.4, 1.5_
+  - [x] 10.3 Configure API Gateway endpoints and integrations
+    - Create POST /onboard endpoint with Lambda proxy integration to start-workflow Lambda
+    - Create GET /status/{requestId} endpoint with Lambda integration to status query Lambda
+    - Configure Cognito authorizer for both endpoints
+    - Set up request/response models for validation
+    - _Requirements: 1.5, 9.1_
+  - [x] 10.4 Implement AWS WAF with security rules
+    - Create WAF WebACL with AWS Managed Core Rule Set
+    - Add SQL injection protection rules
+    - Add XSS protection rules
+    - Configure rate-based rule (100 requests per 5 minutes per IP)
+    - Associate WebACL with API Gateway
+    - _Requirements: 9.1, 9.2, 9.3, 9.4, 9.5_
+  - [ ]* 10.5 Write integration tests for API endpoints
+    - Test POST /onboard with valid input returns 202 and requestId
+    - Test POST /onboard with missing fields returns 400
+    - Test POST /onboard without JWT returns 401
+    - Test rate limiting triggers 429 response
+    - _Requirements: 1.4, 1.5, 9.1_
+
+- [x] 11. Implement Cognito authentication stack
+  - [x] 11.1 Create amplify-stack.ts with Cognito User Pool
+    - Define Cognito User Pool with email sign-in
+    - Configure password policy (min 8 chars, uppercase, lowercase, number, symbol)
+    - Enable email verification requirement
+    - Configure user attributes (email required, name optional)
+    - _Requirements: 1.2_
+  - [x] 11.2 Configure Cognito App Client for Amplify
+    - Create User Pool Client with appropriate auth flows (USER_SRP_AUTH, REFRESH_TOKEN_AUTH)
+    - Set token expiration (access token 1 hour, refresh token 30 days)
+    - Enable OAuth implicit grant flow for Amplify integration
+    - Export User Pool ID and Client ID as CloudFormation outputs
+    - _Requirements: 1.2_
+  - [x] 11.3 Set up Amplify hosting for React frontend
+    - Define Amplify App resource with GitHub repository connection
+    - Configure build settings for Next.js application
+    - Set up environment variables for API endpoint and Cognito config
+    - Configure custom domain (optional)
+    - _Requirements: 1.1_
+
+- [x] 12. Implement React frontend application
+  - [x] 12.1 Initialize Next.js project with TypeScript and Amplify
+    - Create Next.js 14 project with App Router
+    - Install AWS Amplify v6 and Amplify UI React dependencies
+    - Configure Amplify in app layout with Cognito and API settings
+    - Set up TypeScript interfaces for API request/response types
+    - _Requirements: 1.1, 1.2_
+  - [x] 12.2 Create onboarding form page
+    - Create app/onboard/page.tsx with dynamic form component
+    - Implement form fields: vendor name, contact email, business description, tax ID
+    - Add form validation (required fields, email format, tax ID format)
+    - Use Amplify UI components for consistent styling
+    - _Requirements: 1.3, 1.4_
+  - [x] 12.3 Implement API client for backend communication
+    - Create lib/api.ts with submitOnboarding function
+    - Use Amplify API module to make authenticated POST request to /onboard endpoint
+    - Include JWT token from Cognito in Authorization header
+    - Handle API responses and errors
+    - _Requirements: 1.5_
+  - [x] 12.4 Create authentication UI
+    - Create app/page.tsx landing page with login/signup options
+    - Use Amplify UI Authenticator component for auth flows
+    - Implement protected route logic for /onboard page
+    - Add sign-out functionality
+    - _Requirements: 1.2_
+  - [x] 12.5 Create status check page
+    - Create app/status/[requestId]/page.tsx for checking onboarding status
+    - Call GET /status/{requestId} API endpoint
+    - Display current status, risk scores, and timestamps
+    - Show appropriate messaging for different statuses (SUBMITTED, APPROVED, MANUAL_REVIEW)
+    - _Requirements: 7.5, 8.1_
+  - [ ]* 12.6 Write frontend component tests
+    - Test form validation logic
+    - Test API client error handling
+    - Test authentication flow
+    - Test status page rendering with different statuses
+    - _Requirements: 1.3, 1.4, 1.5_
+
+- [x] 13. Configure Fraud Detector model
+  - [x] 13.1 Create Fraud Detector event type and variables
+    - Define event type "onboarding_request" in Fraud Detector console or via CDK
+    - Create variables: email_address (EMAIL_ADDRESS type), ip_address (IP_ADDRESS type), account_name (FREE_FORM_TEXT type)
+    - Configure variable storage in Fraud Detector
+    - _Requirements: 3.1, 3.2_
+  - [x] 13.2 Set up New Account Fraud model
+    - Use Online Fraud Insights model template for new account fraud
+    - Configure model to output fraud_score outcome (0.0 to 1.0)
+    - Train model with sample data or use pre-trained template
+    - Deploy model to production
+    - _Requirements: 3.1, 3.3_
+  - [x] 13.3 Update fraud-detector Lambda with model details
+    - Add Fraud Detector detector name and model version as environment variables
+    - Update Lambda code to use correct event type and variable names
+    - Test Lambda invocation with sample data
+    - _Requirements: 3.2, 3.3_
+
+- [x] 14. Set up monitoring and observability
+  - [x] 14.1 Enable AWS X-Ray tracing
+    - Enable X-Ray tracing on all Lambda functions
+    - Enable X-Ray tracing on API Gateway
+    - Enable X-Ray tracing on Step Functions state machine
+    - _Requirements: 10.5_
+  - [x] 14.2 Create CloudWatch alarms for critical metrics
+    - Create alarm for API Gateway 5XX error rate > 1% for 5 minutes
+    - Create alarm for Step Functions execution failure rate > 5% for 5 minutes
+    - Create alarm for Lambda error rate > 5% for 5 minutes
+    - Configure SNS topic for alarm notifications
+    - _Requirements: 10.5_
+  - [ ]* 14.3 Create CloudWatch dashboard
+    - Add widgets for API Gateway request count and latency
+    - Add widgets for Lambda invocations and errors
+    - Add widgets for Step Functions execution metrics
+    - Add widgets for DynamoDB read/write capacity
+    - _Requirements: 10.5_
+
+- [x] 15. Implement QuickSight dashboard for reporting
+  - [x] 15.1 Create status query Lambda for QuickSight data source
+    - Create lambda/query-status/lambda_function.py
+    - Implement DynamoDB scan with StatusIndex GSI
+    - Return aggregated metrics (count by status, average risk scores)
+    - Format response for QuickSight consumption
+    - _Requirements: 8.1, 8.2_
+  - [x] 15.2 Document QuickSight setup instructions
+    - Create documentation for connecting QuickSight to DynamoDB table
+    - Document steps to create dataset from DynamoDB
+    - Document steps to create visualizations (status distribution, risk score trends, time-series)
+    - Include sample dashboard layout
+    - _Requirements: 8.1, 8.2, 8.3, 8.4, 8.5_
+
+- [x] 16. Create deployment documentation and scripts
+  - [x] 16.1 Write comprehensive README.md
+    - Document project overview and architecture
+    - List all prerequisites (Node.js, Python, AWS CLI, CDK CLI)
+    - Provide step-by-step deployment instructions (cdk bootstrap, cdk deploy --all)
+    - Document post-deployment configuration (SNS email subscription, QuickSight setup)
+    - Include troubleshooting section for common issues
+    - _Requirements: 10.1, 10.2, 10.3, 10.4, 10.5_
+  - [x] 16.2 Create deployment script
+    - Create deploy.sh script that runs cdk deploy --all with proper parameters
+    - Add environment variable validation
+    - Add post-deployment output parsing to display important values (API endpoint, Cognito IDs)
+    - _Requirements: 10.5_
+  - [ ]* 16.3 Create cleanup script
+    - Create cleanup.sh script that runs cdk destroy --all
+    - Add confirmation prompt before deletion
+    - Document data backup considerations before cleanup
+    - _Requirements: 10.5_
+
+- [x] 17. Wire all components together and validate end-to-end flow
+  - [x] 17.1 Update all CDK stacks with cross-stack references
+    - Pass DynamoDB table name from database-stack to workflow-stack
+    - Pass Step Functions state machine ARN from workflow-stack to api-stack
+    - Pass Cognito User Pool ID and Client ID from amplify-stack to frontend config
+    - Pass API Gateway endpoint from api-stack to frontend config
+    - Ensure all CloudFormation exports and imports are correctly configured
+    - _Requirements: 10.2, 10.5_
+  - [x] 17.2 Deploy complete stack to test environment
+    - Run cdk bootstrap if not already done
+    - Execute cdk deploy --all to deploy all stacks
+    - Verify all resources created successfully in AWS Console
+    - Check CloudFormation stack outputs for exported values
+    - _Requirements: 10.4, 10.5_
+  - [x] 17.3 Perform end-to-end integration test
+    - Access deployed frontend URL
+    - Sign up new user via Cognito
+    - Submit test onboarding request with low-risk data
+    - Verify Step Functions execution completes successfully
+    - Verify DynamoDB record created with correct status (APPROVED)
+    - Submit test onboarding request with high-risk data (suspicious email, negative sentiment)
+    - Verify Step Functions routes to manual review
+    - Verify SNS notification sent to admin
+    - Verify DynamoDB record created with MANUAL_REVIEW status
+    - _Requirements: 1.1, 1.2, 1.3, 1.4, 1.5, 2.1, 3.1, 4.1, 5.1, 5.3, 5.4, 6.1, 7.1, 9.1_
+  - [x] 17.4 Validate security controls
+    - Test API Gateway returns 401 without valid JWT token
+    - Test WAF blocks SQL injection attempts in form fields
+    - Test rate limiting by exceeding 100 requests in 5 minutes
+    - Verify PII is masked in DynamoDB records
+    - Review IAM roles to confirm least-privilege access
+    - _Requirements: 2.5, 9.1, 9.2, 9.3, 9.4, 10.4_
+  - [x] 17.5 Verify monitoring and logging
+    - Check CloudWatch Logs for all Lambda functions show execution logs
+    - Verify X-Ray traces show complete request flow
+    - Trigger CloudWatch alarms by simulating errors
+    - Verify alarm notifications delivered via SNS
+    - _Requirements: 10.5_
