@@ -20,8 +20,12 @@ logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
 comprehend = boto3.client('comprehend')
+lambda_client = boto3.client('lambda')
 dynamodb = boto3.resource('dynamodb')
 table = dynamodb.Table('OnboardingRequests')
+
+# Advanced analysis orchestrator
+ADVANCED_ORCHESTRATOR = 'veritas-onboard-advanced-risk-orchestrator'
 
 
 def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
@@ -53,20 +57,41 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             vendor_name, email, description
         )
         
+        # 5. CALL ADVANCED RISK ORCHESTRATOR for payment & legal analysis
+        advanced_results = {}
+        try:
+            logger.info("Calling advanced risk orchestrator...")
+            response = lambda_client.invoke(
+                FunctionName=ADVANCED_ORCHESTRATOR,
+                InvocationType='RequestResponse',
+                Payload=json.dumps(event).encode('utf-8')
+            )
+            advanced_results = json.loads(response['Payload'].read())
+            logger.info(f"Advanced orchestrator returned: {advanced_results.keys()}")
+        except Exception as e:
+            logger.warning(f"Advanced orchestrator failed: {e}")
+            advanced_results = {}
+        
         # Calculate final risk score
         trust_score = trust_signals['total_score']
-        network_risk = network_analysis['risk_score']
-        behavioral_risk = behavioral_indicators['risk_score']
+        network_risk = advanced_results.get('networkRiskScore', network_analysis['risk_score'])
+        behavioral_risk = advanced_results.get('behavioralRiskScore', behavioral_indicators['risk_score'])
+        payment_risk = advanced_results.get('paymentRiskScore', 0.3)
+        legal_risk = advanced_results.get('legalRiskScore', 0.3)
+        entity_risk = advanced_results.get('entityRiskScore', 0.3)
         
-        # Weighted combination
+        # Weighted combination with all 6 risk types
         final_risk = (
-            (1.0 - trust_score/100.0) * 0.6 +  # Trust is 60%
-            network_risk * 0.25 +                # Network is 25%
-            behavioral_risk * 0.15               # Behavioral is 15%
+            (1.0 - trust_score/100.0) * 0.20 +  # Trust is 20%
+            network_risk * 0.15 +                 # Network is 15%
+            behavioral_risk * 0.15 +              # Behavioral is 15%
+            payment_risk * 0.15 +                 # Payment is 15%
+            legal_risk * 0.20 +                   # Legal is 20% (critical!)
+            entity_risk * 0.15                    # Entity is 15%
         )
         final_risk = max(0.05, min(0.95, final_risk))
         
-        logger.info(f"Final risk for {vendor_name}: {final_risk:.2f}")
+        logger.info(f"Final risk for {vendor_name}: {final_risk:.2f} (legal: {legal_risk:.2f}, payment: {payment_risk:.2f})")
         
         return {
             'requestId': request_id,
@@ -75,14 +100,31 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'businessDescription': description,
             'sourceIp': source_ip,
             'fraudScore': round(final_risk, 3),
-            'modelVersion': 'enhanced-v1',
+            'modelVersion': 'enhanced-v2-with-payment-legal',
             'riskFactors': collect_risk_factors(trust_signals, network_analysis, behavioral_indicators),
+            
+            # All risk scores
+            'networkRiskScore': round(network_risk, 3),
+            'entityRiskScore': round(entity_risk, 3),
+            'behavioralRiskScore': round(behavioral_risk, 3),
+            'paymentRiskScore': round(payment_risk, 3),
+            'legalRiskScore': round(legal_risk, 3),
+            'trustScore': round(trust_score / 100.0, 3),
             
             # Visualization data
             'trustSignals': trust_signals,
-            'networkAnalysis': network_analysis,
+            'networkAnalysis': advanced_results.get('networkAnalysis', network_analysis),
             'entities': entities,
             'behavioralIndicators': behavioral_indicators,
+            
+            # NEW: Payment & Legal Analysis
+            'paymentAnalysis': advanced_results.get('paymentAnalysis', {}),
+            'paymentInsights': advanced_results.get('paymentAnalysis', {}).get('paymentInsights', []),
+            'reliabilityRating': advanced_results.get('paymentAnalysis', {}).get('reliabilityRating', 'UNKNOWN'),
+            'legalAnalysis': advanced_results.get('legalAnalysis', {}),
+            'legalIssues': advanced_results.get('legalAnalysis', {}).get('legalIssues', []),
+            'legalStatus': advanced_results.get('legalAnalysis', {}).get('legalStatus', 'UNKNOWN'),
+            
             'visualizationData': {
                 'trustBreakdown': create_trust_breakdown(trust_signals),
                 'networkGraph': network_analysis.get('graph', {}),

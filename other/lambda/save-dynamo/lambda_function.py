@@ -94,6 +94,12 @@ def build_dynamodb_item(event: Dict[str, Any]) -> Dict[str, Any]:
     # Try new flat format first
     fraud_score = event.get('fraudScore', 0.0)
     content_risk_score = event.get('contentRiskScore', 0.0)
+    network_risk_score = event.get('networkRiskScore', 0.0)
+    entity_risk_score = event.get('entityRiskScore', 0.0)
+    behavioral_risk_score = event.get('behavioralRiskScore', 0.0)
+    payment_risk_score = event.get('paymentRiskScore', 0.0)
+    legal_risk_score = event.get('legalRiskScore', 0.0)
+    trust_score = event.get('trustScore', 0.0)
     
     # Fallback to old nested format if flat format not found
     if fraud_score == 0.0 and content_risk_score == 0.0:
@@ -141,7 +147,14 @@ def build_dynamodb_item(event: Dict[str, Any]) -> Dict[str, Any]:
             'M': {
                 'fraudScore': {'N': str(fraud_score)},
                 'contentRiskScore': {'N': str(content_risk_score)},
-                'combinedRiskScore': {'N': str(combined_risk_score)}
+                'combinedRiskScore': {'N': str(combined_risk_score)},
+                'networkRiskScore': {'N': str(network_risk_score)},
+                'entityRiskScore': {'N': str(entity_risk_score)},
+                'behavioralRiskScore': {'N': str(behavioral_risk_score)},
+                'paymentRiskScore': {'N': str(payment_risk_score)},
+                'legalRiskScore': {'N': str(legal_risk_score)},
+                'trustScore': {'N': str(trust_score)},
+                'comprehensiveRiskScore': {'N': str(event.get('comprehensiveRiskScore', combined_risk_score))}
             }
         },
         'fraudDetails': {
@@ -154,7 +167,13 @@ def build_dynamodb_item(event: Dict[str, Any]) -> Dict[str, Any]:
                 'networkAnalysis': {'S': json.dumps(event.get('networkAnalysis', {}))},
                 'entities': {'S': json.dumps(event.get('entities', []))},
                 'behavioralIndicators': {'S': json.dumps(event.get('behavioralIndicators', {}))},
-                'visualizationData': {'S': json.dumps(event.get('visualizationData', {}))}
+                'visualizationData': {'S': json.dumps(event.get('visualizationData', {}))},
+                'paymentAnalysis': {'S': json.dumps(event.get('paymentAnalysis', {}))},
+                'legalAnalysis': {'S': json.dumps(event.get('legalAnalysis', {}))},
+                'paymentInsights': {'S': json.dumps(event.get('paymentInsights', []))},
+                'legalIssues': {'S': json.dumps(event.get('legalIssues', []))},
+                'reliabilityRating': {'S': event.get('reliabilityRating', 'UNKNOWN')},
+                'legalStatus': {'S': event.get('legalStatus', 'UNKNOWN')}
             }
         },
         'sentimentDetails': {

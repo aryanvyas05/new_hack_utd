@@ -23,14 +23,18 @@ lambda_client = boto3.client('lambda')
 NETWORK_ANALYSIS_FUNCTION = 'veritas-onboard-network-analysis'
 ENTITY_RESOLUTION_FUNCTION = 'veritas-onboard-entity-resolution'
 BEHAVIORAL_ANALYSIS_FUNCTION = 'veritas-onboard-behavioral-analysis'
+PAYMENT_HISTORY_FUNCTION = 'veritas-onboard-payment-history'
+LEGAL_RECORDS_FUNCTION = 'veritas-onboard-legal-records'
 
 # Risk weights for final score
 WEIGHTS = {
-    'network': 0.25,
-    'entity': 0.40,  # Highest weight - sanctions are critical
-    'behavioral': 0.20,
-    'fraud': 0.10,  # Original fraud detector
-    'content': 0.05  # Original content analysis
+    'network': 0.15,
+    'entity': 0.30,  # Highest weight - sanctions are critical
+    'behavioral': 0.15,
+    'payment': 0.15,  # Payment history
+    'legal': 0.15,    # Legal records
+    'fraud': 0.05,    # Original fraud detector
+    'content': 0.05   # Original content analysis
 }
 
 
@@ -42,13 +46,15 @@ def lambda_handler(event, context):
         request_id = event.get('requestId')
         logger.info(f"Advanced risk orchestration for request {request_id}")
         
-        # Invoke all three advanced analysis functions in parallel
+        # Invoke all five advanced analysis functions in parallel
         results = invoke_parallel_analyses(event)
         
         # Extract individual risk scores
         network_risk = results.get('network', {}).get('networkRiskScore', 0.3)
         entity_risk = results.get('entity', {}).get('entityRiskScore', 0.3)
         behavioral_risk = results.get('behavioral', {}).get('behavioralRiskScore', 0.3)
+        payment_risk = results.get('payment', {}).get('paymentRiskScore', 0.3)
+        legal_risk = results.get('legal', {}).get('legalRiskScore', 0.3)
         
         # Get original scores if available
         fraud_risk = event.get('fraudScore', 0.3)
@@ -56,7 +62,7 @@ def lambda_handler(event, context):
         
         # Calculate comprehensive risk score
         comprehensive_risk = calculate_comprehensive_risk(
-            network_risk, entity_risk, behavioral_risk, fraud_risk, content_risk
+            network_risk, entity_risk, behavioral_risk, payment_risk, legal_risk, fraud_risk, content_risk
         )
         
         # Determine final recommendation
@@ -91,6 +97,8 @@ def lambda_handler(event, context):
             'networkRiskScore': round(network_risk, 3),
             'entityRiskScore': round(entity_risk, 3),
             'behavioralRiskScore': round(behavioral_risk, 3),
+            'paymentRiskScore': round(payment_risk, 3),
+            'legalRiskScore': round(legal_risk, 3),
             'fraudScore': round(fraud_risk, 3),
             'contentRiskScore': round(content_risk, 3),
             
@@ -98,6 +106,8 @@ def lambda_handler(event, context):
             'networkAnalysis': results.get('network', {}),
             'entityResolution': results.get('entity', {}),
             'behavioralAnalysis': results.get('behavioral', {}),
+            'paymentAnalysis': results.get('payment', {}),
+            'legalAnalysis': results.get('legal', {}),
             
             # Summary
             'allRiskFactors': all_risk_factors,
@@ -122,7 +132,7 @@ def lambda_handler(event, context):
 
 
 def invoke_parallel_analyses(event: Dict) -> Dict[str, Any]:
-    """Invoke all three analysis functions in parallel."""
+    """Invoke all five analysis functions in parallel."""
     results = {}
     
     # Prepare payload
@@ -167,17 +177,45 @@ def invoke_parallel_analyses(event: Dict) -> Dict[str, Any]:
         logger.warning(f"Behavioral analysis failed: {e}")
         results['behavioral'] = {'behavioralRiskScore': 0.3, 'error': str(e)}
     
+    # Invoke Payment History Analysis
+    try:
+        response = lambda_client.invoke(
+            FunctionName=PAYMENT_HISTORY_FUNCTION,
+            InvocationType='RequestResponse',
+            Payload=payload
+        )
+        results['payment'] = json.loads(response['Payload'].read())
+        logger.info("Payment history analysis completed")
+    except Exception as e:
+        logger.warning(f"Payment history analysis failed: {e}")
+        results['payment'] = {'paymentRiskScore': 0.3, 'error': str(e)}
+    
+    # Invoke Legal Records Check
+    try:
+        response = lambda_client.invoke(
+            FunctionName=LEGAL_RECORDS_FUNCTION,
+            InvocationType='RequestResponse',
+            Payload=payload
+        )
+        results['legal'] = json.loads(response['Payload'].read())
+        logger.info("Legal records check completed")
+    except Exception as e:
+        logger.warning(f"Legal records check failed: {e}")
+        results['legal'] = {'legalRiskScore': 0.3, 'error': str(e)}
+    
     return results
 
 
 def calculate_comprehensive_risk(
-    network: float, entity: float, behavioral: float, fraud: float, content: float
+    network: float, entity: float, behavioral: float, payment: float, legal: float, fraud: float, content: float
 ) -> float:
     """Calculate weighted comprehensive risk score."""
     comprehensive = (
         network * WEIGHTS['network'] +
         entity * WEIGHTS['entity'] +
         behavioral * WEIGHTS['behavioral'] +
+        payment * WEIGHTS['payment'] +
+        legal * WEIGHTS['legal'] +
         fraud * WEIGHTS['fraud'] +
         content * WEIGHTS['content']
     )
@@ -185,6 +223,10 @@ def calculate_comprehensive_risk(
     # If entity risk is critical (sanctions match), override
     if entity >= 0.95:
         comprehensive = max(comprehensive, 0.95)
+    
+    # If legal risk is critical (criminal/fraud), override
+    if legal >= 0.9:
+        comprehensive = max(comprehensive, 0.9)
     
     return min(1.0, comprehensive)
 
@@ -227,6 +269,14 @@ def compile_risk_factors(results: Dict) -> List[str]:
     # Behavioral factors
     behavioral_factors = results.get('behavioral', {}).get('behavioralRiskFactors', [])
     all_factors.extend([f'behavioral:{f}' for f in behavioral_factors])
+    
+    # Payment factors
+    payment_factors = results.get('payment', {}).get('paymentRiskFactors', [])
+    all_factors.extend([f'payment:{f}' for f in payment_factors])
+    
+    # Legal factors
+    legal_factors = results.get('legal', {}).get('legalRiskFactors', [])
+    all_factors.extend([f'legal:{f}' for f in legal_factors])
     
     return all_factors
 

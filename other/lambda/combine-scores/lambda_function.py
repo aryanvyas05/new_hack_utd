@@ -78,8 +78,8 @@ def lambda_handler(event, context):
             f"recommendation={recommendation}"
         )
         
-        # Return combined score and recommendation with all original fields
-        return {
+        # Return combined score and recommendation with ALL fields (including new risk scores)
+        result = {
             'requestId': event.get('requestId'),
             'vendorName': event.get('vendorName'),
             'contactEmail': event.get('contactEmail'),
@@ -91,12 +91,31 @@ def lambda_handler(event, context):
             'contentRiskScore': content_risk_score,
             'combinedRiskScore': combined_risk_score,
             'recommendation': recommendation,
+            # NEW: Pass through all the new risk scores
+            'networkRiskScore': event.get('networkRiskScore', 0.0),
+            'entityRiskScore': event.get('entityRiskScore', 0.0),
+            'behavioralRiskScore': event.get('behavioralRiskScore', 0.0),
+            'paymentRiskScore': event.get('paymentRiskScore', 0.0),
+            'legalRiskScore': event.get('legalRiskScore', 0.0),
+            'trustScore': event.get('trustScore', 0.0),
+            # Pass through analysis details
+            'paymentAnalysis': event.get('paymentAnalysis', {}),
+            'paymentInsights': event.get('paymentInsights', []),
+            'reliabilityRating': event.get('reliabilityRating', 'UNKNOWN'),
+            'legalAnalysis': event.get('legalAnalysis', {}),
+            'legalIssues': event.get('legalIssues', []),
+            'legalStatus': event.get('legalStatus', 'UNKNOWN'),
+            'trustSignals': event.get('trustSignals', {}),
+            'networkAnalysis': event.get('networkAnalysis', {}),
+            'entityResolution': event.get('entityResolution', {}),
+            'behavioralAnalysis': event.get('behavioralAnalysis', {}),
             'details': {
                 'fraudWeight': FRAUD_SCORE_WEIGHT,
                 'contentWeight': CONTENT_RISK_WEIGHT,
                 'threshold': MANUAL_REVIEW_THRESHOLD
             }
         }
+        return result
         
     except ValueError as e:
         logger.error(f"Validation error: {str(e)}")

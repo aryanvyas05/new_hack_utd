@@ -68,6 +68,39 @@ def parse_fraud_details(fraud_details: Dict) -> Dict:
             except:
                 result['visualizationData'] = {}
         
+        # Parse payment analysis
+        if 'paymentAnalysis' in fraud_details:
+            try:
+                result['paymentAnalysis'] = json.loads(fraud_details['paymentAnalysis'])
+            except:
+                result['paymentAnalysis'] = {}
+        
+        if 'paymentInsights' in fraud_details:
+            try:
+                result['paymentInsights'] = json.loads(fraud_details['paymentInsights'])
+            except:
+                result['paymentInsights'] = []
+        
+        # Parse legal analysis
+        if 'legalAnalysis' in fraud_details:
+            try:
+                result['legalAnalysis'] = json.loads(fraud_details['legalAnalysis'])
+            except:
+                result['legalAnalysis'] = {}
+        
+        if 'legalIssues' in fraud_details:
+            try:
+                result['legalIssues'] = json.loads(fraud_details['legalIssues'])
+            except:
+                result['legalIssues'] = []
+        
+        # Add reliability and legal status
+        if 'reliabilityRating' in fraud_details:
+            result['reliabilityRating'] = fraud_details['reliabilityRating']
+        
+        if 'legalStatus' in fraud_details:
+            result['legalStatus'] = fraud_details['legalStatus']
+        
         return result
     except Exception as e:
         logger.warning(f"Error parsing fraud details: {e}")

@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { getOnboardingStatus } from '@/lib/api';
 import { StatusResponse } from '@/types/api';
+import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
 
 export default function StatusPage() {
   const params = useParams();
@@ -239,6 +240,79 @@ export default function StatusPage() {
             </div>
           </div>
 
+          {/* PIE CHARTS & BAR CHARTS - ALL 7 RISK SCORES */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            {/* Risk Distribution Pie Chart */}
+            <div className="bg-white rounded-xl p-6 shadow-lg">
+              <h3 className="text-lg font-bold text-gray-900 mb-4">📊 Risk Distribution</h3>
+              <ResponsiveContainer width="100%" height={250}>
+                <PieChart>
+                  <Pie
+                    data={[
+                      { name: 'Fraud', value: fraudRisk * 100, color: '#ef4444' },
+                      { name: 'Network', value: (status.riskScores?.networkRiskScore || 0) * 100, color: '#f59e0b' },
+                      { name: 'Entity', value: (status.riskScores?.entityRiskScore || 0) * 100, color: '#eab308' },
+                      { name: 'Behavioral', value: (status.riskScores?.behavioralRiskScore || 0) * 100, color: '#84cc16' },
+                      { name: 'Payment', value: (status.riskScores?.paymentRiskScore || 0) * 100, color: '#06b6d4' },
+                      { name: 'Legal', value: (status.riskScores?.legalRiskScore || 0) * 100, color: '#8b5cf6' },
+                    ].filter(item => item.value > 0)}
+                    cx="50%"
+                    cy="50%"
+                    labelLine={false}
+                    label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                    outerRadius={80}
+                    fill="#8884d8"
+                    dataKey="value"
+                  >
+                    {[
+                      { name: 'Fraud', value: fraudRisk * 100, color: '#ef4444' },
+                      { name: 'Network', value: (status.riskScores?.networkRiskScore || 0) * 100, color: '#f59e0b' },
+                      { name: 'Entity', value: (status.riskScores?.entityRiskScore || 0) * 100, color: '#eab308' },
+                      { name: 'Behavioral', value: (status.riskScores?.behavioralRiskScore || 0) * 100, color: '#84cc16' },
+                      { name: 'Payment', value: (status.riskScores?.paymentRiskScore || 0) * 100, color: '#06b6d4' },
+                      { name: 'Legal', value: (status.riskScores?.legalRiskScore || 0) * 100, color: '#8b5cf6' },
+                    ].filter(item => item.value > 0).map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip formatter={(value: number) => `${value.toFixed(1)}%`} />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+
+            {/* All Risk Scores Bar Chart */}
+            <div className="bg-white rounded-xl p-6 shadow-lg">
+              <h3 className="text-lg font-bold text-gray-900 mb-4">📈 Risk Scores Breakdown</h3>
+              <ResponsiveContainer width="100%" height={250}>
+                <BarChart data={[
+                  { name: 'Fraud', score: fraudRisk * 100, color: '#ef4444' },
+                  { name: 'Network', score: (status.riskScores?.networkRiskScore || 0) * 100, color: '#f59e0b' },
+                  { name: 'Entity', score: (status.riskScores?.entityRiskScore || 0) * 100, color: '#eab308' },
+                  { name: 'Behavioral', score: (status.riskScores?.behavioralRiskScore || 0) * 100, color: '#84cc16' },
+                  { name: 'Payment', score: (status.riskScores?.paymentRiskScore || 0) * 100, color: '#06b6d4' },
+                  { name: 'Legal', score: (status.riskScores?.legalRiskScore || 0) * 100, color: '#8b5cf6' },
+                ]}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="name" angle={-45} textAnchor="end" height={80} />
+                  <YAxis label={{ value: 'Risk %', angle: -90, position: 'insideLeft' }} />
+                  <Tooltip formatter={(value: number) => `${value.toFixed(1)}%`} />
+                  <Bar dataKey="score">
+                    {[
+                      { name: 'Fraud', score: fraudRisk * 100, color: '#ef4444' },
+                      { name: 'Network', score: (status.riskScores?.networkRiskScore || 0) * 100, color: '#f59e0b' },
+                      { name: 'Entity', score: (status.riskScores?.entityRiskScore || 0) * 100, color: '#eab308' },
+                      { name: 'Behavioral', score: (status.riskScores?.behavioralRiskScore || 0) * 100, color: '#84cc16' },
+                      { name: 'Payment', score: (status.riskScores?.paymentRiskScore || 0) * 100, color: '#06b6d4' },
+                      { name: 'Legal', score: (status.riskScores?.legalRiskScore || 0) * 100, color: '#8b5cf6' },
+                    ].map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
           {/* Trust Signal Breakdown */}
           <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl p-6 mb-6">
             <h3 className="text-lg font-bold text-gray-900 mb-4">🔍 Trust Signal Analysis</h3>
@@ -422,6 +496,101 @@ export default function StatusPage() {
                 </div>
               )}
             </div>
+          </div>
+        )}
+
+        {/* Payment Analysis */}
+        {(status.fraudDetails?.paymentAnalysis || status.fraudDetails?.paymentInsights) && (
+          <div className="bg-white rounded-2xl shadow-xl p-8 mb-6">
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">💳 Payment History Analysis</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+              <div>
+                <div className="text-4xl font-bold text-blue-600 mb-2">
+                  {((status.riskScores?.paymentRiskScore || status.fraudDetails?.paymentAnalysis?.paymentRiskScore || 0) * 100).toFixed(0)}%
+                </div>
+                <div className="text-sm text-gray-600">Payment Risk Score</div>
+              </div>
+              <div>
+                <div className="text-2xl font-bold text-gray-900 mb-2">
+                  {status.fraudDetails?.reliabilityRating || status.fraudDetails?.paymentAnalysis?.reliabilityRating || 'UNKNOWN'}
+                </div>
+                <div className="text-sm text-gray-600">Reliability Rating</div>
+              </div>
+            </div>
+            
+            {status.fraudDetails?.paymentInsights && status.fraudDetails.paymentInsights.length > 0 && (
+              <div className="space-y-3">
+                <h3 className="font-semibold text-gray-900 mb-3">Payment Insights:</h3>
+                {status.fraudDetails.paymentInsights.map((insight: any, index: number) => (
+                  <div key={index} className="border-l-4 pl-4 py-2" style={{
+                    borderColor: insight.risk === 'HIGH' ? '#ef4444' : 
+                                 insight.risk === 'MEDIUM' ? '#f59e0b' : '#10b981'
+                  }}>
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <div className="font-semibold text-gray-900">{insight.type}</div>
+                        <div className="text-sm text-gray-600">{insight.message}</div>
+                      </div>
+                      <div className="text-sm font-medium" style={{
+                        color: insight.risk === 'HIGH' ? '#ef4444' : 
+                               insight.risk === 'MEDIUM' ? '#f59e0b' : '#10b981'
+                      }}>
+                        {insight.value}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Legal Records */}
+        {(status.fraudDetails?.legalAnalysis || status.fraudDetails?.legalIssues) && (
+          <div className="bg-white rounded-2xl shadow-xl p-8 mb-6">
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">⚖️ Legal Records Check</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+              <div>
+                <div className="text-4xl font-bold text-red-600 mb-2">
+                  {((status.riskScores?.legalRiskScore || status.fraudDetails?.legalAnalysis?.legalRiskScore || 0) * 100).toFixed(0)}%
+                </div>
+                <div className="text-sm text-gray-600">Legal Risk Score</div>
+              </div>
+              <div>
+                <div className="text-2xl font-bold text-gray-900 mb-2">
+                  {status.fraudDetails?.legalStatus || status.fraudDetails?.legalAnalysis?.legalStatus || 'UNKNOWN'}
+                </div>
+                <div className="text-sm text-gray-600">Legal Status</div>
+              </div>
+            </div>
+            
+            {status.fraudDetails?.legalIssues && status.fraudDetails.legalIssues.length > 0 && (
+              <div className="space-y-3">
+                <h3 className="font-semibold text-gray-900 mb-3">Legal Issues Detected:</h3>
+                {status.fraudDetails.legalIssues.slice(0, 10).map((issue: any, index: number) => (
+                  <div key={index} className="border-l-4 border-red-500 pl-4 py-2 bg-red-50">
+                    <div className="flex justify-between items-start">
+                      <div className="flex-1">
+                        <div className="font-semibold text-red-900">{issue.category}</div>
+                        {issue.keyword && (
+                          <div className="text-sm text-red-700 mt-1">
+                            Keyword: <span className="font-medium">{issue.keyword}</span>
+                          </div>
+                        )}
+                        {issue.context && (
+                          <div className="text-sm text-gray-600 mt-1 italic">
+                            {issue.context}
+                          </div>
+                        )}
+                      </div>
+                      <div className="text-sm font-medium text-red-600 ml-4">
+                        {(issue.severity * 100).toFixed(0)}%
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
 
