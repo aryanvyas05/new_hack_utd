@@ -3,8 +3,18 @@
 export interface OnboardingRequest {
   vendorName: string;
   contactEmail: string;
-  businessDescription: string;
-  taxId: string;
+  tradingAsName: string;
+  legalEntityIdentifier: string;
+  dateOfIncorporation: string;
+  countryOfIncorporation: string;
+  companyRegistrationNumber: string;
+  registeredAddress: string;
+  principalPlaceOfBusiness: string;
+  corporateTaxId: string;
+  ultimateBeneficialOwners: string;
+  natureOfBusiness: string;
+  primaryProductsServices: string;
+  purposeOfRelationship: string;
 }
 
 export interface OnboardingResponse {

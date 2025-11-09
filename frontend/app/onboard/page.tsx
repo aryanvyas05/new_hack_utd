@@ -11,8 +11,18 @@ export default function OnboardPage() {
   const [formData, setFormData] = useState<OnboardingRequest>({
     vendorName: '',
     contactEmail: '',
-    businessDescription: '',
-    taxId: '',
+    tradingAsName: '',
+    legalEntityIdentifier: '',
+    dateOfIncorporation: '',
+    countryOfIncorporation: '',
+    companyRegistrationNumber: '',
+    registeredAddress: '',
+    principalPlaceOfBusiness: '',
+    corporateTaxId: '',
+    ultimateBeneficialOwners: '',
+    natureOfBusiness: '',
+    primaryProductsServices: '',
+    purposeOfRelationship: '',
   });
   const [errors, setErrors] = useState<Partial<Record<keyof OnboardingRequest, string>>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -23,16 +33,11 @@ export default function OnboardPage() {
     return emailRegex.test(email);
   };
 
-  const validateTaxId = (taxId: string): boolean => {
-    const taxIdRegex = /^\d{2}-\d{7}$|^\d{3}-\d{2}-\d{4}$/;
-    return taxIdRegex.test(taxId);
-  };
-
   const validateForm = (): boolean => {
     const newErrors: Partial<Record<keyof OnboardingRequest, string>> = {};
 
     if (!formData.vendorName.trim()) {
-      newErrors.vendorName = 'Vendor name is required';
+      newErrors.vendorName = 'Company name is required';
     }
 
     if (!formData.contactEmail.trim()) {
@@ -41,16 +46,48 @@ export default function OnboardPage() {
       newErrors.contactEmail = 'Please enter a valid email address';
     }
 
-    if (!formData.businessDescription.trim()) {
-      newErrors.businessDescription = 'Business description is required';
-    } else if (formData.businessDescription.trim().length < 20) {
-      newErrors.businessDescription = 'Please provide a more detailed description (at least 20 characters)';
+    if (!formData.tradingAsName.trim()) {
+      newErrors.tradingAsName = 'Trading As (DBA) Name is required';
     }
 
-    if (!formData.taxId.trim()) {
-      newErrors.taxId = 'Tax ID is required';
-    } else if (!validateTaxId(formData.taxId)) {
-      newErrors.taxId = 'Please enter a valid Tax ID (XX-XXXXXXX or XXX-XX-XXXX)';
+    if (!formData.dateOfIncorporation.trim()) {
+      newErrors.dateOfIncorporation = 'Date of Incorporation is required';
+    }
+
+    if (!formData.countryOfIncorporation.trim()) {
+      newErrors.countryOfIncorporation = 'Country of Incorporation is required';
+    }
+
+    if (!formData.companyRegistrationNumber.trim()) {
+      newErrors.companyRegistrationNumber = 'Company Registration Number is required';
+    }
+
+    if (!formData.registeredAddress.trim()) {
+      newErrors.registeredAddress = 'Registered Address is required';
+    }
+
+    if (!formData.principalPlaceOfBusiness.trim()) {
+      newErrors.principalPlaceOfBusiness = 'Principal Place of Business is required';
+    }
+
+    if (!formData.corporateTaxId.trim()) {
+      newErrors.corporateTaxId = 'Corporate Tax ID / TIN is required';
+    }
+
+    if (!formData.ultimateBeneficialOwners.trim()) {
+      newErrors.ultimateBeneficialOwners = 'Ultimate Beneficial Owners is required';
+    }
+
+    if (!formData.natureOfBusiness.trim()) {
+      newErrors.natureOfBusiness = 'Nature of Business / Industry is required';
+    }
+
+    if (!formData.primaryProductsServices.trim()) {
+      newErrors.primaryProductsServices = 'Primary Products/Services is required';
+    }
+
+    if (!formData.purposeOfRelationship.trim()) {
+      newErrors.purposeOfRelationship = 'Purpose of Relationship with Bank is required';
     }
 
     setErrors(newErrors);
@@ -166,50 +203,241 @@ export default function OnboardPage() {
               </p>
             </div>
 
-            {/* Business Description */}
+            {/* Trading As (DBA) Name */}
             <div>
-              <label htmlFor="businessDescription" className="block text-sm font-semibold text-gray-700 mb-2">
-                Business Description <span className="text-red-500">*</span>
-              </label>
-              <textarea
-                id="businessDescription"
-                value={formData.businessDescription}
-                onChange={(e) => handleChange('businessDescription', e.target.value)}
-                rows={6}
-                className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors ${
-                  errors.businessDescription ? 'border-red-300 bg-red-50' : 'border-gray-300'
-                }`}
-                placeholder="Describe your business, products, and services in detail..."
-              />
-              {errors.businessDescription && (
-                <p className="mt-2 text-sm text-red-600">{errors.businessDescription}</p>
-              )}
-              <p className="mt-2 text-sm text-gray-500">
-                Provide detailed information about your business for accurate assessment
-              </p>
-            </div>
-
-            {/* Tax ID */}
-            <div>
-              <label htmlFor="taxId" className="block text-sm font-semibold text-gray-700 mb-2">
-                Tax ID (EIN or SSN) <span className="text-red-500">*</span>
+              <label htmlFor="tradingAsName" className="block text-sm font-semibold text-gray-700 mb-2">
+                Trading As (DBA) Name <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
-                id="taxId"
-                value={formData.taxId}
-                onChange={(e) => handleChange('taxId', e.target.value)}
+                id="tradingAsName"
+                value={formData.tradingAsName}
+                onChange={(e) => handleChange('tradingAsName', e.target.value)}
                 className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors ${
-                  errors.taxId ? 'border-red-300 bg-red-50' : 'border-gray-300'
+                  errors.tradingAsName ? 'border-red-300 bg-red-50' : 'border-gray-300'
                 }`}
-                placeholder="12-3456789 or 123-45-6789"
+                placeholder="Acme Trading Co."
               />
-              {errors.taxId && (
-                <p className="mt-2 text-sm text-red-600">{errors.taxId}</p>
+              {errors.tradingAsName && (
+                <p className="mt-2 text-sm text-red-600">{errors.tradingAsName}</p>
               )}
+            </div>
+
+            {/* Legal Entity Identifier (LEI) */}
+            <div>
+              <label htmlFor="legalEntityIdentifier" className="block text-sm font-semibold text-gray-700 mb-2">
+                Legal Entity Identifier (LEI)
+              </label>
+              <input
+                type="text"
+                id="legalEntityIdentifier"
+                value={formData.legalEntityIdentifier}
+                onChange={(e) => handleChange('legalEntityIdentifier', e.target.value)}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                placeholder="5493001KJTIIGC8Y1R12"
+              />
               <p className="mt-2 text-sm text-gray-500">
-                Format: XX-XXXXXXX (EIN) or XXX-XX-XXXX (SSN)
+                20-character alphanumeric code (optional)
               </p>
+            </div>
+
+            {/* Date of Incorporation */}
+            <div>
+              <label htmlFor="dateOfIncorporation" className="block text-sm font-semibold text-gray-700 mb-2">
+                Date of Incorporation <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="date"
+                id="dateOfIncorporation"
+                value={formData.dateOfIncorporation}
+                onChange={(e) => handleChange('dateOfIncorporation', e.target.value)}
+                className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors ${
+                  errors.dateOfIncorporation ? 'border-red-300 bg-red-50' : 'border-gray-300'
+                }`}
+              />
+              {errors.dateOfIncorporation && (
+                <p className="mt-2 text-sm text-red-600">{errors.dateOfIncorporation}</p>
+              )}
+            </div>
+
+            {/* Country of Incorporation */}
+            <div>
+              <label htmlFor="countryOfIncorporation" className="block text-sm font-semibold text-gray-700 mb-2">
+                Country of Incorporation <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                id="countryOfIncorporation"
+                value={formData.countryOfIncorporation}
+                onChange={(e) => handleChange('countryOfIncorporation', e.target.value)}
+                className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors ${
+                  errors.countryOfIncorporation ? 'border-red-300 bg-red-50' : 'border-gray-300'
+                }`}
+                placeholder="United States"
+              />
+              {errors.countryOfIncorporation && (
+                <p className="mt-2 text-sm text-red-600">{errors.countryOfIncorporation}</p>
+              )}
+            </div>
+
+            {/* Company Registration Number */}
+            <div>
+              <label htmlFor="companyRegistrationNumber" className="block text-sm font-semibold text-gray-700 mb-2">
+                Company Registration Number <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                id="companyRegistrationNumber"
+                value={formData.companyRegistrationNumber}
+                onChange={(e) => handleChange('companyRegistrationNumber', e.target.value)}
+                className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors ${
+                  errors.companyRegistrationNumber ? 'border-red-300 bg-red-50' : 'border-gray-300'
+                }`}
+                placeholder="C1234567"
+              />
+              {errors.companyRegistrationNumber && (
+                <p className="mt-2 text-sm text-red-600">{errors.companyRegistrationNumber}</p>
+              )}
+            </div>
+
+            {/* Registered Address (Legal) */}
+            <div>
+              <label htmlFor="registeredAddress" className="block text-sm font-semibold text-gray-700 mb-2">
+                Registered Address (Legal) <span className="text-red-500">*</span>
+              </label>
+              <textarea
+                id="registeredAddress"
+                value={formData.registeredAddress}
+                onChange={(e) => handleChange('registeredAddress', e.target.value)}
+                rows={3}
+                className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors ${
+                  errors.registeredAddress ? 'border-red-300 bg-red-50' : 'border-gray-300'
+                }`}
+                placeholder="123 Main Street, Suite 100, City, State, ZIP"
+              />
+              {errors.registeredAddress && (
+                <p className="mt-2 text-sm text-red-600">{errors.registeredAddress}</p>
+              )}
+            </div>
+
+            {/* Principal Place of Business (Operational HQ) */}
+            <div>
+              <label htmlFor="principalPlaceOfBusiness" className="block text-sm font-semibold text-gray-700 mb-2">
+                Principal Place of Business (Operational HQ) <span className="text-red-500">*</span>
+              </label>
+              <textarea
+                id="principalPlaceOfBusiness"
+                value={formData.principalPlaceOfBusiness}
+                onChange={(e) => handleChange('principalPlaceOfBusiness', e.target.value)}
+                rows={3}
+                className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors ${
+                  errors.principalPlaceOfBusiness ? 'border-red-300 bg-red-50' : 'border-gray-300'
+                }`}
+                placeholder="456 Business Blvd, City, State, ZIP"
+              />
+              {errors.principalPlaceOfBusiness && (
+                <p className="mt-2 text-sm text-red-600">{errors.principalPlaceOfBusiness}</p>
+              )}
+            </div>
+
+            {/* Corporate Tax ID / TIN */}
+            <div>
+              <label htmlFor="corporateTaxId" className="block text-sm font-semibold text-gray-700 mb-2">
+                Corporate Tax ID / TIN <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                id="corporateTaxId"
+                value={formData.corporateTaxId}
+                onChange={(e) => handleChange('corporateTaxId', e.target.value)}
+                className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors ${
+                  errors.corporateTaxId ? 'border-red-300 bg-red-50' : 'border-gray-300'
+                }`}
+                placeholder="12-3456789"
+              />
+              {errors.corporateTaxId && (
+                <p className="mt-2 text-sm text-red-600">{errors.corporateTaxId}</p>
+              )}
+            </div>
+
+            {/* Ultimate Beneficial Owners */}
+            <div>
+              <label htmlFor="ultimateBeneficialOwners" className="block text-sm font-semibold text-gray-700 mb-2">
+                Ultimate Beneficial Owners <span className="text-red-500">*</span>
+              </label>
+              <textarea
+                id="ultimateBeneficialOwners"
+                value={formData.ultimateBeneficialOwners}
+                onChange={(e) => handleChange('ultimateBeneficialOwners', e.target.value)}
+                rows={3}
+                className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors ${
+                  errors.ultimateBeneficialOwners ? 'border-red-300 bg-red-50' : 'border-gray-300'
+                }`}
+                placeholder="List individuals with 25% or more ownership"
+              />
+              {errors.ultimateBeneficialOwners && (
+                <p className="mt-2 text-sm text-red-600">{errors.ultimateBeneficialOwners}</p>
+              )}
+            </div>
+
+            {/* Nature of Business / Industry */}
+            <div>
+              <label htmlFor="natureOfBusiness" className="block text-sm font-semibold text-gray-700 mb-2">
+                Nature of Business / Industry <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                id="natureOfBusiness"
+                value={formData.natureOfBusiness}
+                onChange={(e) => handleChange('natureOfBusiness', e.target.value)}
+                className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors ${
+                  errors.natureOfBusiness ? 'border-red-300 bg-red-50' : 'border-gray-300'
+                }`}
+                placeholder="e.g., Technology, Manufacturing, Retail"
+              />
+              {errors.natureOfBusiness && (
+                <p className="mt-2 text-sm text-red-600">{errors.natureOfBusiness}</p>
+              )}
+            </div>
+
+            {/* Primary Products/Services */}
+            <div>
+              <label htmlFor="primaryProductsServices" className="block text-sm font-semibold text-gray-700 mb-2">
+                Primary Products/Services <span className="text-red-500">*</span>
+              </label>
+              <textarea
+                id="primaryProductsServices"
+                value={formData.primaryProductsServices}
+                onChange={(e) => handleChange('primaryProductsServices', e.target.value)}
+                rows={3}
+                className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors ${
+                  errors.primaryProductsServices ? 'border-red-300 bg-red-50' : 'border-gray-300'
+                }`}
+                placeholder="Describe your main products or services"
+              />
+              {errors.primaryProductsServices && (
+                <p className="mt-2 text-sm text-red-600">{errors.primaryProductsServices}</p>
+              )}
+            </div>
+
+            {/* Purpose of Relationship with Bank */}
+            <div>
+              <label htmlFor="purposeOfRelationship" className="block text-sm font-semibold text-gray-700 mb-2">
+                Purpose of Relationship with Bank <span className="text-red-500">*</span>
+              </label>
+              <textarea
+                id="purposeOfRelationship"
+                value={formData.purposeOfRelationship}
+                onChange={(e) => handleChange('purposeOfRelationship', e.target.value)}
+                rows={3}
+                className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors ${
+                  errors.purposeOfRelationship ? 'border-red-300 bg-red-50' : 'border-gray-300'
+                }`}
+                placeholder="e.g., Payment processing, business loans, treasury services"
+              />
+              {errors.purposeOfRelationship && (
+                <p className="mt-2 text-sm text-red-600">{errors.purposeOfRelationship}</p>
+              )}
             </div>
 
             {/* Submit Button */}
