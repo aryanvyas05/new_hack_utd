@@ -13,12 +13,23 @@ export async function submitOnboarding(data: OnboardingRequest): Promise<Onboard
     console.log('Submitting to:', `${API_ENDPOINT}onboard`);
     console.log('Data:', data);
     
+    // Transform new KYC form to backend format
+    const backendPayload = {
+      vendorName: data.vendorName,
+      contactEmail: data.contactEmail,
+      businessDescription: `${data.natureOfBusiness}. Primary products/services: ${data.primaryProductsServices}. Purpose: ${data.purposeOfRelationship}. Trading as: ${data.tradingAsName}. Incorporated in ${data.countryOfIncorporation} on ${data.dateOfIncorporation}. Registration: ${data.companyRegistrationNumber}. Address: ${data.registeredAddress}. Principal place: ${data.principalPlaceOfBusiness}. UBOs: ${data.ultimateBeneficialOwners}.`,
+      taxId: data.corporateTaxId || '00-0000000',
+      sourceIp: '127.0.0.1'
+    };
+    
+    console.log('Backend payload:', backendPayload);
+    
     const response = await fetch(`${API_ENDPOINT}onboard`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(data),
+      body: JSON.stringify(backendPayload),
     });
 
     console.log('Response status:', response.status);

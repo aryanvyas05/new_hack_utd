@@ -28,6 +28,80 @@ export default function OnboardPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
+  // Demo data for quick testing
+  const demoCompanies = {
+    microsoft: {
+      vendorName: 'Microsoft Corporation',
+      contactEmail: 'contact@microsoft.com',
+      tradingAsName: 'Microsoft',
+      legalEntityIdentifier: 'INF9MR6LARFH6YFMYA47',
+      dateOfIncorporation: '1975-04-04',
+      countryOfIncorporation: 'United States',
+      companyRegistrationNumber: '600413485',
+      registeredAddress: 'One Microsoft Way, Redmond, WA 98052',
+      principalPlaceOfBusiness: 'Redmond, Washington, United States',
+      corporateTaxId: '91-1144442',
+      ultimateBeneficialOwners: 'Satya Nadella (CEO), Public Shareholders (NASDAQ: MSFT)',
+      natureOfBusiness: 'Technology - Software, Cloud Services, Hardware',
+      primaryProductsServices: 'Windows OS, Microsoft Office, Azure Cloud, Xbox, Surface devices, LinkedIn, GitHub',
+      purposeOfRelationship: 'Enterprise software licensing and cloud services partnership',
+    },
+    theranos: {
+      vendorName: 'Theranos Inc',
+      contactEmail: 'admin@theranos-fake.xyz',
+      tradingAsName: 'Theranos',
+      legalEntityIdentifier: 'N/A',
+      dateOfIncorporation: '2003-09-01',
+      countryOfIncorporation: 'United States',
+      companyRegistrationNumber: 'C2745575',
+      registeredAddress: '1601 S California Ave, Palo Alto, CA 94304',
+      principalPlaceOfBusiness: 'Palo Alto, California (Defunct)',
+      corporateTaxId: '11-1111111',
+      ultimateBeneficialOwners: 'Elizabeth Holmes (Former CEO - Convicted), Ramesh Balwani (Former COO - Convicted)',
+      natureOfBusiness: 'Healthcare Technology (Defunct) - Blood Testing Fraud',
+      primaryProductsServices: 'Claimed revolutionary blood testing technology that was fraudulent. Company sued in 2023 for fraud. SEC charges filed. Federal investigation ongoing. Criminal charges. Ponzi scheme allegations. Money laundering investigation by FBI. Multiple regulatory violations by FDA.',
+      purposeOfRelationship: 'TESTING FRAUD DETECTION - High Risk Vendor',
+    },
+    meta: {
+      vendorName: 'Meta Platforms, Inc.',
+      contactEmail: 'business@meta.com',
+      tradingAsName: 'Meta (formerly Facebook)',
+      legalEntityIdentifier: '549300RLBH1Y6CEQV023',
+      dateOfIncorporation: '2004-07-29',
+      countryOfIncorporation: 'United States',
+      companyRegistrationNumber: 'C2745575',
+      registeredAddress: '1 Hacker Way, Menlo Park, CA 94025',
+      principalPlaceOfBusiness: 'Menlo Park, California, United States',
+      corporateTaxId: '20-1665019',
+      ultimateBeneficialOwners: 'Mark Zuckerberg (CEO & Controlling Shareholder), Public Shareholders (NASDAQ: META)',
+      natureOfBusiness: 'Social Media & Technology - Metaverse Development',
+      primaryProductsServices: 'Facebook, Instagram, WhatsApp, Messenger, Oculus VR, Reality Labs, Meta Quest',
+      purposeOfRelationship: 'Digital advertising partnership and API integration services',
+    },
+    nestle: {
+      vendorName: 'Nestlé S.A.',
+      contactEmail: 'corporate@nestle.com',
+      tradingAsName: 'Nestlé',
+      legalEntityIdentifier: '529900XYFLVZE103H460',
+      dateOfIncorporation: '1866-01-01',
+      countryOfIncorporation: 'Switzerland',
+      companyRegistrationNumber: 'CHE-103.622.035',
+      registeredAddress: 'Avenue Nestlé 55, 1800 Vevey, Switzerland',
+      principalPlaceOfBusiness: 'Vevey, Switzerland',
+      corporateTaxId: '98-0000000',
+      ultimateBeneficialOwners: 'Public Shareholders (SIX: NESN), Institutional Investors',
+      natureOfBusiness: 'Food & Beverage Manufacturing - Global Consumer Goods',
+      primaryProductsServices: 'Nescafé, KitKat, Maggi, Purina, Gerber, Perrier, San Pellegrino, Häagen-Dazs, nutrition products',
+      purposeOfRelationship: 'Supply chain financing and international payment processing',
+    },
+  };
+
+  const loadDemoData = (company: keyof typeof demoCompanies) => {
+    setFormData(demoCompanies[company]);
+    setErrors({});
+    setSubmitError(null);
+  };
+
   const validateEmail = (email: string): boolean => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
@@ -136,6 +210,41 @@ export default function OnboardPage() {
           <p className="text-lg text-gray-600">
             Submit your information for automated risk assessment
           </p>
+        </div>
+
+        {/* Demo Data Buttons */}
+        <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl p-4 mb-6 border-2 border-blue-200">
+          <p className="text-sm font-semibold text-gray-700 mb-3">🎯 Quick Demo - Load Sample Data:</p>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+            <button
+              type="button"
+              onClick={() => loadDemoData('microsoft')}
+              className="px-3 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              Microsoft Corporation
+            </button>
+            <button
+              type="button"
+              onClick={() => loadDemoData('theranos')}
+              className="px-3 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              Theranos Inc
+            </button>
+            <button
+              type="button"
+              onClick={() => loadDemoData('meta')}
+              className="px-3 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              Meta Platforms
+            </button>
+            <button
+              type="button"
+              onClick={() => loadDemoData('nestle')}
+              className="px-3 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              Nestlé S.A.
+            </button>
+          </div>
         </div>
 
         {/* Form Card */}
